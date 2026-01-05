@@ -188,19 +188,11 @@ void handle_message(int client_idx, Message* msg) {
                 break;
             }
             
-            // Send invitation with host user_id
+            // Send invitation
             response.type = MSG_INVITE_TO_ROOM;
-            response.user_id = clients[client_idx].user_id;  // Host user_id
-            response.target_id = clients[client_idx].user_id; // Also send host id as target_id
+            response.user_id = clients[client_idx].user_id;
             strcpy(response.username, clients[client_idx].username);
             send_message(clients[friend_idx].socket, &response);
-            
-            // Notify host that invitation was sent
-            memset(&response, 0, sizeof(Message));
-            response.type = MSG_RESPONSE;
-            snprintf(response.message, sizeof(response.message), 
-                    "Invitation sent to %s (ID: %d)", response.username, friend_id);
-            send_message(clients[client_idx].socket, &response);
             break;
         }
         
