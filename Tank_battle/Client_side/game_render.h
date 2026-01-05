@@ -4,6 +4,6 @@
 #include <SDL2/SDL.h>
 #include "protocol.h"
 
-void render_game(SDL_Renderer* renderer, GameState* state, int my_id);
+void render_game(SDL_Renderer* renderer, GameState* state, int my_player_index);
 
 #endif

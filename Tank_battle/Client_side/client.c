@@ -12,6 +12,8 @@
 
 int sock = 0;
 int my_user_id = -1;
+int my_player_index = -1; // 0 or 1 in game room
+int my_room_id = -1; // Current game room ID
 int in_game = 0;
 int opponent_id = -1;
 GameState current_state;
@@ -35,6 +37,14 @@ void* receive_messages(void* arg) {
                 if (msg.user_id > 0 && my_user_id < 0) {
                     my_user_id = msg.user_id;
                 }
+                if (msg.player_index >= 0) {
+                    my_player_index = msg.player_index;
+                    printf("You are Player %d\n", msg.player_index + 1);
+                }
+                if (msg.room_id > 0) {
+                    my_room_id = msg.room_id;
+                    printf("Game Room ID: %d\n", msg.room_id);
+                }
                 printf("Server: %s\n", msg.message);
                 break;
                 
@@ -51,7 +61,7 @@ void* receive_messages(void* arg) {
                 
             case MSG_GAME_STATE:
                 pthread_mutex_lock(&state_mutex);
-                memcpy(&current_state, msg.data, sizeof(GameState));
+                memcpy(&current_state, &msg.game_state, sizeof(GameState));
                 pthread_mutex_unlock(&state_mutex);
                 break;
                 
@@ -189,6 +199,8 @@ void play_game() {
                 Message msg;
                 memset(&msg, 0, sizeof(Message));
                 msg.user_id = my_user_id;
+                msg.player_index = my_player_index;
+                msg.room_id = my_room_id;
                 msg.target_id = opponent_id;
                 
                 switch (e.key.keysym.sym) {
@@ -225,7 +237,7 @@ void play_game() {
         }
         
         pthread_mutex_lock(&state_mutex);
-        render_game(renderer, &current_state, my_user_id);
+        render_game(renderer, &current_state, my_player_index);
         pthread_mutex_unlock(&state_mutex);
         
         SDL_Delay(33); // ~30 FPS

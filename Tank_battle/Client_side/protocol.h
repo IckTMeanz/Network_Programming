@@ -67,12 +67,14 @@ typedef struct {
 typedef struct {
     MessageType type;
     int user_id;
+    int player_index; // 0 or 1 (for game room)
     char username[MAX_USERNAME];
     char password[MAX_PASSWORD];
     char email[MAX_EMAIL];
     int target_id;
     int room_id;
-    int data[20]; // For game data
+    int data[4]; // For game commands (direction, etc)
+    GameState game_state; // Full game state for MSG_GAME_STATE
     char message[256];
 } Message;
 

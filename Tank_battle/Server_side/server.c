@@ -49,6 +49,15 @@ GameRoom* find_room_by_players(int p1_id, int p2_id) {
     return NULL;
 }
 
+GameRoom* find_room_by_id(int room_id) {
+    for (int i = 0; i < MAX_ROOMS; i++) {
+        if (rooms[i].active && rooms[i].room_id == room_id) {
+            return &rooms[i];
+        }
+    }
+    return NULL;
+}
+
 void* game_loop(void* arg) {
     GameRoom* room = (GameRoom*)arg;
     Message msg;
@@ -82,7 +91,8 @@ void* game_loop(void* arg) {
         
         // Send game state to both players
         msg.type = MSG_GAME_STATE;
-        memcpy(msg.data, &room->state, sizeof(GameState));
+        msg.room_id = room->room_id;
+        memcpy(&msg.game_state, &room->state, sizeof(GameState));
         
         send_message(room->player1_socket, &msg);
         send_message(room->player2_socket, &msg);
@@ -215,11 +225,17 @@ void handle_message(int client_idx, Message* msg) {
                 
                 pthread_mutex_unlock(&rooms_mutex);
                 
-                // Notify both players
+                // Notify both players with their player index
                 response.type = MSG_RESPONSE;
                 response.room_id = room->room_id;
+                
+                // Host is player 1 (index 0)
+                response.player_index = 0;
                 strcpy(response.message, "Game starting");
                 send_message(clients[host_idx].socket, &response);
+                
+                // Guest is player 2 (index 1)
+                response.player_index = 1;
                 send_message(clients[client_idx].socket, &response);
                 
                 // Start game loop in new thread
@@ -236,21 +252,29 @@ void handle_message(int client_idx, Message* msg) {
         }
         
         case MSG_GAME_MOVE: {
-            GameRoom* room = find_room_by_players(clients[client_idx].user_id, msg->target_id);
+            GameRoom* room = find_room_by_id(msg->room_id);
             if (room) {
                 pthread_mutex_lock(&room->lock);
                 move_tank(&room->state, clients[client_idx].user_id, msg->data[0]);
                 pthread_mutex_unlock(&room->lock);
+            } else {
+                response.type = MSG_ERROR;
+                strcpy(response.message, "Game room not found");
+                send_message(clients[client_idx].socket, &response);
             }
             break;
         }
         
         case MSG_GAME_SHOOT: {
-            GameRoom* room = find_room_by_players(clients[client_idx].user_id, msg->target_id);
+            GameRoom* room = find_room_by_id(msg->room_id);
             if (room) {
                 pthread_mutex_lock(&room->lock);
                 shoot_bullet(&room->state, clients[client_idx].user_id);
                 pthread_mutex_unlock(&room->lock);
+            } else {
+                response.type = MSG_ERROR;
+                strcpy(response.message, "Game room not found");
+                send_message(clients[client_idx].socket, &response);
             }
             break;
         }

@@ -52,7 +52,7 @@ void render_bullet(SDL_Renderer* renderer, Bullet* bullet) {
     SDL_RenderFillRect(renderer, &bullet_rect);
 }
 
-void render_game(SDL_Renderer* renderer, GameState* state, int my_id) {
+void render_game(SDL_Renderer* renderer, GameState* state, int my_player_index) {
     // Clear screen (black background)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -66,10 +66,9 @@ void render_game(SDL_Renderer* renderer, GameState* state, int my_id) {
         SDL_RenderDrawLine(renderer, 0, i, MAP_WIDTH, i);
     }
     
-    // Render tanks
+    // Render tanks - use player_index (0 or 1) instead of player_id
     for (int i = 0; i < 2; i++) {
-        render_tank(renderer, &state->tanks[i], 
-                   state->tanks[i].player_id == my_id);
+        render_tank(renderer, &state->tanks[i], i == my_player_index);
     }
     
     // Render bullets
