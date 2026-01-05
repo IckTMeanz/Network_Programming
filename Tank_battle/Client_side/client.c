@@ -55,8 +55,9 @@ void* receive_messages(void* arg) {
                 
             case MSG_INVITE_TO_ROOM:
                 printf("Game invitation from %s (ID: %d)\n", msg.username, msg.user_id);
-                printf("Accept? (y/n): ");
-                opponent_id = msg.user_id;
+                opponent_id = msg.target_id; // Store the actual host ID
+                printf("Host ID set to: %d\n", opponent_id);
+                printf("Type '6' to join game, or 'n' to reject\n");
                 break;
                 
             case MSG_GAME_STATE:
@@ -155,6 +156,13 @@ void join_room() {
     msg.user_id = my_user_id;
     msg.target_id = opponent_id;
     
+    if (opponent_id <= 0) {
+        printf("Error: No opponent set. Opponent ID = %d\n", opponent_id);
+        printf("You must accept an invitation first!\n");
+        return;
+    }
+    
+    printf("Joining room with opponent ID: %d\n", opponent_id);
     send_message(&msg);
     in_game = 1;
 }
